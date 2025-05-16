@@ -20,22 +20,26 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!message.trim()) return;
-    
+
     // Add user message to chat
     const userMessage = { type: 'user', content: message };
     setMessages([...messages, userMessage]);
-    
+
     // Clear input
     setMessage('');
-    
+
     // Set loading state
     setLoading(true);
-    
+
     try {
-      const res = await axios.post('http://localhost:5000/api/chat', { message });
-      
+      // In your chat component or service
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+      // Use in axios calls
+      const res = await axios.post(`${API_URL}/api/chat`, { message });
+
       // Add AI response to chat
       const aiMessage = { type: 'ai', content: res.data.reply };
       setMessages(prevMessages => [...prevMessages, aiMessage]);
@@ -74,7 +78,7 @@ function App() {
         <div className="chat-header">
           <h1>Prism</h1>
         </div>
-        
+
         <div className="messages-container">
           {messages.length === 0 ? (
             <div className="empty-state">
@@ -82,8 +86,8 @@ function App() {
             </div>
           ) : (
             messages.map((msg, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`message ${msg.type}-message`}
               >
                 <div className="message-bubble">
@@ -103,7 +107,7 @@ function App() {
           )}
           <div ref={messagesEndRef} />
         </div>
-        
+
         <form className="input-container" onSubmit={handleSubmit}>
           <input
             className="message-input"
@@ -112,8 +116,8 @@ function App() {
             placeholder="Type your message..."
             disabled={loading}
           />
-          <button 
-            className="send-button" 
+          <button
+            className="send-button"
             type="submit"
             disabled={loading || !message.trim()}
           >
