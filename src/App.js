@@ -35,11 +35,12 @@ function App() {
 
     try {
       // In your chat component or service
+      // In your chat component or service
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
       // Use in axios calls
       const res = await axios.post(`${API_URL}/api/chat`, { message });
-
+      
       // Add AI response to chat
       const aiMessage = { type: 'ai', content: res.data.reply };
       setMessages(prevMessages => [...prevMessages, aiMessage]);
