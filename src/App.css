@@ -259,3 +259,61 @@ body {
     transform: scale(1);
   }
 }
+
+/* Add these styles to your App.css file */
+
+/* Existing styles from your App.css remain unchanged */
+
+/* Typewriter effect cursor styling */
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  font-weight: bold;
+  color: #333;
+}
+
+@keyframes blink {
+  from, to { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Optional: Styling for the typing message */
+.typing-message {
+  display: flex;
+  align-items: center;
+}
+
+/* Make sure the message container allows long content to wrap properly */
+.markdown-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Optional: Disable input during typing to prevent user interruption */
+.message-input:disabled, .send-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Optional: Highlight the message that's currently being typed */
+.ai-message.typing {
+  background-color: rgba(144, 238, 144, 0.1);
+}
+
+/* Optional: Adjust typing speed controls if you implement them */
+.typing-controls {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.typing-controls label {
+  margin-right: 5px;
+}
+
+.typing-controls input {
+  width: 100px;
+}

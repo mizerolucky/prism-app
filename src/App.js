@@ -3,15 +3,16 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import './App.css';
 
-
-
 function App() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [typingText, setTypingText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [fullResponse, setFullResponse] = useState('');
+  const [typingSpeed, setTypingSpeed] = useState(30); // ms per character
   const messagesEndRef = useRef(null);
   
-
   // Scroll to bottom whenever messages change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,56 +20,102 @@ function App() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, typingText]);
+
+  // Effect for typewriter animation
+  useEffect(() => {
+    if (isTyping && fullResponse) {
+      if (typingText.length < fullResponse.length) {
+        const timeout = setTimeout(() => {
+          setTypingText(fullResponse.substring(0, typingText.length + 1));
+        }, typingSpeed);
+        
+        return () => clearTimeout(timeout);
+      } else {
+        // Typing complete
+        setIsTyping(false);
+        
+        // Update the messages array with the complete response
+        setMessages(prevMessages => {
+          const updatedMessages = [...prevMessages];
+          // Replace the temporary typing message with the complete message
+          updatedMessages[updatedMessages.length - 1] = {
+            type: 'ai',
+            content: fullResponse
+          };
+          return updatedMessages;
+        });
+        
+        setFullResponse('');
+        setTypingText('');
+      }
+    }
+  }, [isTyping, typingText, fullResponse, typingSpeed]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!message.trim()) return;
+    if (!message.trim()) return;
 
-  // Add user message to chat
-  const userMessage = { type: 'user', content: message };
-  setMessages([...messages, userMessage]);
+    // Add user message to chat
+    const userMessage = { type: 'user', content: message };
+    setMessages([...messages, userMessage]);
 
-  // Add console logs here before sending the request
-  console.log("Sending request to:", process.env.REACT_APP_API_URL || 'http://localhost:5000');
-  console.log("Message being sent:", message);
+    // Clear input
+    setMessage('');
 
-  // Clear input
-  setMessage('');
+    // Set loading state
+    setLoading(true);
 
-  // Set loading state
-  setLoading(true);
+    try {
+      // In your chat component or service
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  try {
-    // In your chat component or service
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      // Use in axios calls
+      const res = await axios.post(`${API_URL}/api/chat`, { message });
 
-    // Use in axios calls
-    const res = await axios.post(`${API_URL}/api/chat`, { message });
+      // Stop loading
+      setLoading(false);
 
-    // Add AI response to chat
-    const aiMessage = { 
-      type: 'ai',
-      content: res.data.reply || res.data.reply
-    };
-    setMessages(prevMessages => [...prevMessages, aiMessage]);
-  } catch (err) {
-    console.error("API Error:", err);
-    // Add error message to chat
-    const errorMessage = { type: 'error', content: `Error: ${err.message}` };
-    setMessages(prevMessages => [...prevMessages, errorMessage]);
-  } finally {
-    setLoading(false);
-  }
-}
+      // Get the AI response
+      const aiResponse = res.data.reply || res.data.reply;
+      
+      // Add a placeholder message that will be updated during typing
+      setMessages(prevMessages => [...prevMessages, { type: 'ai', content: '' }]);
+      
+      // Start the typewriter effect
+      setFullResponse(aiResponse);
+      setTypingText('');
+      setIsTyping(true);
+      
+    } catch (err) {
+      console.error("API Error:", err);
+      setLoading(false);
+      // Add error message to chat
+      const errorMessage = { type: 'error', content: `Error: ${err.message}` };
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+    }
+  };
 
   // Function to render message content
-  const renderMessageContent = (content, type) => {
+  const renderMessageContent = (content, type, index) => {
     if (type === 'user') {
       // Don't parse markdown for user messages
       return <span>You: {content}</span>;
     } else if (type === 'ai') {
+      // For the last AI message that's currently being typed
+      if (isTyping && index === messages.length - 1) {
+        return (
+          <div className="ai-content">
+            <span className="ai-prefix">Prism AI: </span>
+            <div className="markdown-content">
+              <ReactMarkdown>{typingText}</ReactMarkdown>
+              <span className="cursor-blink">|</span>
+            </div>
+          </div>
+        );
+      }
+      // For completed AI messages
       return (
         <div className="ai-content">
           <span className="ai-prefix">Prism AI: </span>
@@ -102,7 +149,7 @@ function App() {
                 className={`message ${msg.type}-message`}
               >
                 <div className="message-bubble">
-                  {renderMessageContent(msg.content, msg.type)}
+                  {renderMessageContent(msg.content, msg.type, index)}
                 </div>
               </div>
             ))
@@ -125,14 +172,14 @@ function App() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
-            disabled={loading}
+            disabled={loading || isTyping}
           />
           <button
             className="send-button"
             type="submit"
-            disabled={loading || !message.trim()}
+            disabled={loading || isTyping || !message.trim()}
           >
-            {loading ? 'Sending...' : 'Send'}
+            {loading ? 'Sending...' : isTyping ? 'Typing...' : 'Send'}
           </button>
         </form>
       </div>
