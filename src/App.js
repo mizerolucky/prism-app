@@ -71,7 +71,7 @@ function App() {
     } else if (type === 'ai') {
       return (
         <div className="ai-content">
-          <span className="ai-prefix">AI: </span>
+          <span className="ai-prefix">Prism AI: </span>
           <div className="markdown-content">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
