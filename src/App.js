@@ -3,11 +3,15 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import './App.css';
 
+console.log("Sending request to:", process.env.REACT_APP_API_URL);
+console.log("Message being sent:", message);
+
 function App() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  
 
   // Scroll to bottom whenever messages change
   const scrollToBottom = () => {
@@ -19,39 +23,42 @@ function App() {
   }, [messages]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!message.trim()) return;
+  if (!message.trim()) return;
 
-    // Add user message to chat
-    const userMessage = { type: 'user', content: message };
-    setMessages([...messages, userMessage]);
+  // Add user message to chat
+  const userMessage = { type: 'user', content: message };
+  setMessages([...messages, userMessage]);
 
-    // Clear input
-    setMessage('');
+  // Add console logs here before sending the request
+  console.log("Sending request to:", process.env.REACT_APP_API_URL || 'http://localhost:5000');
+  console.log("Message being sent:", message);
 
-    // Set loading state
-    setLoading(true);
+  // Clear input
+  setMessage('');
 
-    try {
-      // In your chat component or service
-      // In your chat component or service
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // Set loading state
+  setLoading(true);
 
-      // Use in axios calls
-      const res = await axios.post(`${API_URL}/api/chat`, { message });
-      
-      // Add AI response to chat
-      const aiMessage = { type: 'ai', content: res.data.reply };
-      setMessages(prevMessages => [...prevMessages, aiMessage]);
-    } catch (err) {
-      // Add error message to chat
-      const errorMessage = { type: 'error', content: `Error: ${err.message}` };
-      setMessages(prevMessages => [...prevMessages, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    // In your chat component or service
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+    // Use in axios calls
+    const res = await axios.post(`${API_URL}/api/chat`, { message });
+
+    // Add AI response to chat
+    const aiMessage = { type: 'ai', content: res.data.reply };
+    setMessages(prevMessages => [...prevMessages, aiMessage]);
+  } catch (err) {
+    // Add error message to chat
+    const errorMessage = { type: 'error', content: `Error: ${err.message}` };
+    setMessages(prevMessages => [...prevMessages, errorMessage]);
+  } finally {
+    setLoading(false);
+  }
+}
 
   // Function to render message content
   const renderMessageContent = (content, type) => {
