@@ -3,8 +3,7 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import './App.css';
 
-console.log("Sending request to:", process.env.REACT_APP_API_URL);
-console.log("Message being sent:", message);
+
 
 function App() {
   const [message, setMessage] = useState('');
@@ -49,9 +48,13 @@ function App() {
     const res = await axios.post(`${API_URL}/api/chat`, { message });
 
     // Add AI response to chat
-    const aiMessage = { type: 'ai', content: res.data.reply };
+    const aiMessage = { 
+      type: 'ai',
+      content: res.data.reply || res.data.reply
+    };
     setMessages(prevMessages => [...prevMessages, aiMessage]);
   } catch (err) {
+    console.error("API Error:", err);
     // Add error message to chat
     const errorMessage = { type: 'error', content: `Error: ${err.message}` };
     setMessages(prevMessages => [...prevMessages, errorMessage]);
