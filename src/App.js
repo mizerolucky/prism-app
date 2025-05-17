@@ -11,7 +11,24 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const [fullResponse, setFullResponse] = useState('');
   const [typingSpeed, setTypingSpeed] = useState(30); // ms per character
+  const [darkMode, setDarkMode] = useState(true); // Default to dark mode
   const messagesEndRef = useRef(null);
+  
+  // Toggle dark/light mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // Apply theme to body element
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
   
   // Scroll to bottom whenever messages change
   const scrollToBottom = () => {
@@ -131,10 +148,33 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="chat-container">
         <div className="chat-header">
           <h1>Prism</h1>
+          <button 
+            className="theme-toggle-btn" 
+            onClick={toggleDarkMode}
+            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? (
+              <svg className="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 2V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M12 20V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M4 12L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M22 12L20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M19.7778 4.22217L17.5556 6.44438" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6.44446 17.5555L4.22224 19.7777" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M19.7778 19.7778L17.5556 17.5556" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6.44446 6.44434L4.22224 4.22212" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            ) : (
+              <svg className="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </button>
         </div>
 
         <div className="messages-container">
