@@ -349,6 +349,7 @@ body {
   --light-message-user-bg: #25D366;  /* Green for user messages in light mode */
   --light-message-ai-bg: #ffffff;    /* White for AI in light mode */
   --light-text: #333333;
+  --light-dark-grey: #444444;        /* Dark grey for header and button text */
   --light-secondary-text: #666666;
   --light-input-bg: #ffffff;
   --light-input-text: #333333;
@@ -410,8 +411,11 @@ body.light-mode,
 }
 
 .light-mode .chat-header {
+  .bob{
+    color: var(--light-dark-grey);
+  }
   background-color: var(--light-chat-bg);
-  color: var(--light-text);
+  color: var(--light-dark-grey); /* Dark grey for "Prism" text in light mode */
 }
 
 /* Theme toggle button */
@@ -642,7 +646,7 @@ body.light-mode,
 
 .light-mode .send-button {
   background-color: var(--light-button-bg);
-  color: var(--light-button-text);
+  color: var(--light-dark-grey); /* Dark grey text on green button in light mode */
 }
 
 .light-mode .send-button:hover:not(:disabled) {

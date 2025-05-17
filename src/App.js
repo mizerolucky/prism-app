@@ -151,7 +151,7 @@ function App() {
     <div className={`app-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="chat-container">
         <div className="chat-header">
-          <h1>Prism</h1>
+          <h1 className='bob'>Prism</h1>
           <button 
             className="theme-toggle-btn" 
             onClick={toggleDarkMode}
