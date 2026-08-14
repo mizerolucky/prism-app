@@ -1,70 +1,137 @@
-# Getting Started with Create React App
+# Prism
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A chat interface for Meta's Llama models, running on the Hugging Face Inference API.
 
-## Available Scripts
+**Live:** [prism-steel.vercel.app](https://prism-steel.vercel.app)
 
-In the project directory, you can run:
+<img width="1918" height="1018" alt="image" src="https://github.com/user-attachments/assets/98abb1f6-492f-4913-b182-0a2b0ba169c6" />
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## What it is
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Prism is a minimal chat client. You type, it sends your message to a Llama model hosted on Hugging Face, and it renders the reply. That's the whole product surface.
 
-### `npm test`
+It's split into a React frontend and a separate backend service. The split exists for one reason: the Hugging Face token can't go in the browser. Everything else about the project follows from that decision.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## Architecture
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+React frontend  ──►  Backend API  ──►  Hugging Face Inference API  ──►  Llama model
+      ▲                  │
+      │                  └─ holds HUGGINGFACE_API_KEY
+      └──────────  rendered reply  ◄───────────
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The frontend has no credentials. It posts a message to the backend's chat endpoint; the backend attaches the token, calls Hugging Face, normalizes what comes back, and returns it. A token shipped to the browser is readable in DevTools and billable to your account — this is the part of the project worth pointing at.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Two things the request path has to survive:
 
-### `npm run eject`
+- **Cold starts.** Hugging Face unloads idle models. The first request after a quiet period returns a 503 with an `estimated_time` field instead of a completion. <!-- FILL: what the backend does here — retry with backoff, or pass a "model warming up" state to the UI? If it currently just surfaces the error, say that; it's honest and it sets up the roadmap. -->
+- **Malformed replies.** Raw model output can arrive with the prompt echoed back, truncated mid-sentence, or wrapped in chat template tokens. <!-- FILL: what you strip or normalize before returning it. -->
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Stack
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+| | |
+|---|---|
+| Frontend |  Create React App  |
+| Backend |  Node + Express  |
+| Model |  meta-llama/Llama-3.2-3B-Instruct  |
+| Inference | Hugging Face Inference API |
+| Hosting | Vercel (frontend) Render(backend) |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## Running it locally
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Two processes: backend first, then frontend.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+git clone <repository-url>
+cd prism
+```
 
-### Code Splitting
+**Backend**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+cd server        # FILL: your actual directory name
+npm install
+```
 
-### Analyzing the Bundle Size
+Create `.env` in the backend directory:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
+HUGGINGFACE_API_KEY=hf_your_token_here
+PORT=5000
+```
 
-### Making a Progressive Web App
+Get a token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) — read access is enough.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+npm run dev
+```
 
-### Advanced Configuration
+**Frontend**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+cd ../client     # FILL: your actual directory name
+npm install
+```
 
-### Deployment
+Create `.env` in the frontend directory pointing at the backend:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+VITE_API_URL=http://localhost:5000
+```
 
-### `npm run build` fails to minify
+<!-- FILL: if this is Create React App rather than Vite, the prefix is
+     REACT_APP_ instead of VITE_. Get this right — it's the single most
+     common reason a cloned repo doesn't run. -->
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+npm run dev
+```
+
+Open the address the dev server prints.
+
+---
+
+## Deployment notes
+
+The frontend is on Vercel with `VITE_API_URL` set in Settings → Environment Variables, pointing at the deployed backend rather than localhost.
+
+The backend needs `HUGGINGFACE_API_KEY` set in its own host's environment, and CORS configured to accept the Vercel domain. Forgetting the second one produces a frontend that works locally and silently fails in production.
+
+If you fork this and swap models, check the model is actually served by the Inference API — many larger Llama variants aren't available on the free tier, and the 404 looks like a code bug rather than a permissions one.
+
+---
+
+## Current limitations
+
+Stated plainly, because they're real:
+
+- **No conversation memory.** Each message is sent independently; the model doesn't see what came before.
+- **No streaming.** You wait for the full completion, which on a cold model is several seconds of nothing.
+- **Two cold starts, not one.** If the backend is on a free tier that sleeps, a first request can wait for the backend to wake *and* the model to load.
+- One hardcoded model, no picker.
+- Chat history is lost on refresh.
+
+---
+
+## Next
+
+Three things, in the order I'd do them:
+
+1. **Multi-turn context** — send prior messages so it behaves like a conversation rather than a series of one-shots. The real work is deciding what to drop as the context window fills.
+2. **Streaming responses** — switch the backend to the streaming endpoint and forward chunks to the client. Removes most of the perceived latency without making the model any faster.
+3. **Markdown and code rendering** — Llama returns fenced code blocks constantly and Prism currently shows them as raw text.
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
